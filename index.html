@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<style>
+body { font: 16px Arial;}
+path {
+  stroke: red;
+	stroke-width: 2;
+	fill: none;
+}
+.axis path,
+.axis line {
+	fill: none;
+	stroke: grey;
+	stroke-width: 1;
+	shape-rendering: crispEdges;
+}
+</style>
+    <head>
+        <meta charset = "UTF-8">
+        <script src="https://d3js.org/d3.v3.min.js"></script>
+        <script src="streets.json"></script>
+        <script src="pumps.csv" type="csv"></script>
+        <script src="deathdays.csv" type="csv"></script>
+        <script src="deaths_age_sex.csv" type="csv"></script>
+        <script src="deathdays.csv" type="csv"></script>
+        <script src="brew.csv" type="csv"></script>
+        <script src="workhouse.csv" type="csv"></script>
+        <title>Project 1</title>
+    </head>
+    <body>
+      <b>Project 1</b>
+
+      <b>Gabriel Wachowski</b>
+      <p> .</p>
+      <p>Project Description: "recreate Dr. John Snow's map using today's
+        tools of trade (D3, to be specific). In addition to recreating the original map
+        in an interactive version, you will add additional charts to the side of the map,
+        as well as interface elements to make the data more interactive."</p>
+      <p> .</p>
+      <a href="https://docs.google.com/document/d/1OQJyVtdPwurR1ABJ2f-ZNXejQC3XghAw_0zi29A-dWM/edit?usp=sharing">Design Documenation</a>
+      <p> .</p>
+      <a href="https://youtu.be/bn7kUlvU2iM">Youtube Link</a>
+      <p> .</p>
+
+
+      <b> 1854 London Map with Cholera Outbreak; Blue = Pumps, Red = Location of Deaths, Green = Brewery</b>
+      <div id="svg1"></div>
+      <div id="svg2"></div>
+
+
+
+        <script>
+            var w = 960;     // width of svg
+            var h = 800;      // height of svg
+            var xScale = d3.scale.linear(); 
+            var yScale = d3.scale.linear();
+            xScale.domain([0,20]).range([0, w]); 
+            yScale.domain([20,0]).range( [0,h]); 
+            var pathGenerator = d3.svg.line() 
+            .x(function(d) { return xScale(d.x); }) 
+            .y(function(d) { return yScale(d.y); });
+
+            var svg = d3.select( "#svg1" )
+                    .append( "svg" )
+                    .attr( "width", w )
+                    .attr( "height", h );
+
+            d3.json("streets.json", function(streets){
+                 svg.selectAll(".line") 
+                .data(streets) 
+                .enter().append("path") 
+                .style('fill', 'none') 
+                .style('stroke', 'black') 
+                .style('stroke-width', '1.5px') 
+                .attr("class", "map") 
+                .attr("d", pathGenerator);
+
+                  d3.csv("pumps.csv", function(pumps) {
+
+                  svg.selectAll("circle")
+                     .data(pumps).enter()
+                     .append("circle")
+                     .style('fill', 'blue')
+                     .attr("cx", function(d) {return xScale(d.x)})
+                     .attr("cy", function(d) {return yScale(d.y)})
+                     .attr("r", 4);
+                   });
+
+                   d3.csv("deaths_age_sex.csv", function(deaths) {
+
+                     svg.selectAll("circle")
+                        .data(deaths).enter()
+                        .append("circle")
+                        .style('fill', 'red')
+                        .attr("cx", function(d) {return xScale(d.x)})
+                        .attr("cy", function(d) {return yScale(d.y)})
+                        .attr("r", 3);
+                      });
+
+            });
+            d3.csv("brew.csv", function(brew) {
+
+                svg.selectAll("circle")
+                   .data(brew).enter()
+                   .append("circle")
+                   .style('fill', 'green')
+                   .attr("cx", function(d) {return xScale(d.x)})
+                   .attr("cy", function(d) {return yScale(d.y)})
+                   .attr("r", 5);
+                 });
+
+            d3.csv("workhouse.csv", function(work) {
+
+                     svg.selectAll("circle")
+                        .data(work).enter()
+                        .append("circle")
+                        .style('fill', 'green')
+                        .attr("cx", function(d) {return xScale(d.x)})
+                        .attr("cy", function(d) {return yScale(d.y)})
+                        .attr("r", 5);
+                      });
+
+
+            // Set the dimensions of the canvas / graph
+            var	margin = {top: 30, right: 20, bottom: 30, left: 50},
+            	width = 800 - margin.left - margin.right,
+            	height = 370 - margin.top - margin.bottom;
+
+            // Parse the date / time
+            var	parseDate = d3.time.format("%d-%b-%y").parse;
+
+            // Set the ranges
+            var	x = d3.time.scale().range([0, width]);
+            var	y = d3.scale.linear().range([height, 0]);
+
+            // Define the axes
+            var	xAxis = d3.svg.axis().scale(x)
+            	.orient("bottom").ticks(10);
+
+            var	yAxis = d3.svg.axis().scale(y)
+            	.orient("left").ticks(10);
+
+            // Define the line
+            var	valueline = d3.svg.line()
+            	.x(function(d) { return x(d.date); })
+            	.y(function(d) { return y(d.deaths); });
+
+            // Adds the svg canvas
+            var	chart1 = d3.select("#svg2")
+            	.append("svg")
+            		.attr("width", width + margin.left + margin.right)
+            		.attr("height", height + margin.top + margin.bottom)
+            	.append("g")
+            		.attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+            // Get the data
+            d3.csv("deathdays.csv", function(error, data) {
+            	data.forEach(function(d) {
+            		d.date = parseDate(d.date);
+            		d.deaths = +d.deaths;
+            	});
+
+            	// Scale the range of the data
+            	x.domain(d3.extent(data, function(d) { return d.date; }));
+            	y.domain([0, d3.max(data, function(d) { return d.deaths; })]);
+
+            	// Add the valueline path.
+            	chart1.append("path")		// Add the valueline path.
+            		.attr("class", "line")
+            		.attr("d", valueline(data));
+
+            	// Add the X Axis
+            	chart1.append("g")			// Add the X Axis
+            		.attr("class", "x axis")
+            		.attr("transform", "translate(0," + height + ")")
+            		.call(xAxis);
+
+            	// Add the Y Axis
+            	chart1.append("g")			// Add the Y Axis
+            		.attr("class", "y axis")
+            		.call(yAxis);
+
+                chart1.append('text')
+                      .text('Cholera Epidemic Number of Deaths by Day');
+                      var word = "gongoozler";
+
+            });
+
+
+
+
+        </script>
+    </body>
+</html>
